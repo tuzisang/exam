@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ch">
+
+<head>
+    <meta charset="UTF-8">
+    <title>注册页面</title>
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.css">
+    <script src="js/jquery-3.4.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript">
+
+        // 浏览器加载完毕
+        $(function () {
+
+            //绑定 用户名编辑框 焦点消失事件
+            $("#username").blur(function () {
+                var $usernameStr = $("#username").val();
+                console.log($usernameStr + "用户的编辑框，焦点消失了");
+
+                //用户名编辑框是否已经填写内容
+                if ($usernameStr != "") {
+                    //使用ajax，进行用户名验证
+                    usernameCheck($usernameStr);
+
+                } else {
+                    var msg = ` <span class="glyphicon glyphicon-remove"</span>用户名不能为空`;
+                    $("#usernameCheck").attr("style", "color: black;");
+                    //把提示信息写到用户编辑框的右边的span
+                    $("#usernameCheck").html(msg);
+                }
+
+            });
+
+
+
+            //绑定 验证码编辑框 的 焦点消失事件
+            $("#code").blur(function () {
+                var $codeStr = $("#code").val();
+                console.log($codeStr + "验证码的编辑框，焦点消失了");
+                codeCheck($codeStr);
+            });
+
+
+
+
+            // 绑定提交按钮，准备 序列化提交表单
+            $("#submit").click(function () {
+
+                //判断 用户是否全部填写 或 用户名已经存在 和 验证码是否正确
+                //用户名编辑框是否已经填写内容
+                var $usernameStr = $("#username").val();
+                var $nameStr = $("#name").val();
+                var $passwordStr = $("#password").val();
+                var $codeStr = $("#code").val();
+
+                if ($usernameStr == "" || $nameStr == "" || $passwordStr == "" || $codeStr == "") {
+                    alert("表单信息不能为空!");
+
+                } else {
+                    // 进行用户名是否存在判断
+                    usernameCheck($usernameStr);
+                    // 进行验证码是否正确判断
+                    codeCheck($codeStr);
+
+                    console.log("验证码是否正确：" + allowCode);
+                    console.log("用户名是否可用：" + allowUser);
+
+                    if (allowCode && allowUser) {
+
+                        //绑定表单，进行表单序列化
+                        var $userSerializeStr = $("form:eq(0)").serialize();
+
+                        // 用户可以注册，向服务发送用户信息
+                        saveUser($userSerializeStr);
+
+                        //跳转到登录页面
+                        var loginHTML = $('<a href="http://localhost:8080/exam/login.html"><span></span></a>');
+                        loginHTML.find('span').click();
+
+                    } else if (!allowCode) {
+                        alert("验证码错误！请重新输入。")
+
+                    } else if (!allowUser) {
+                        alert("用户名已存在！请重新输入。");
+                    }
+
+                }
+
+            });
+        });
+
+
+
+
+        //用户可以注册，用户信息进行序列化
+        function saveUser($userSerializeStr) {
+            $.ajax({
+                url: "http://localhost:8080/exam/saveUser",
+                data: $userSerializeStr,
+                type: "post",
+                dataType: "json",
+                success: function (data) {
+                    console.log("注册是否成功：" + data.message);
+
+                }
+
+            });
+        }
+
+
+
+
+
+        // 向服务器发出请求， 判断验证码是否正确
+        var allowCode = false;
+        function codeCheck($codeStr) {
+            $.ajax({
+                url: "http://localhost:8080/exam/checkCode",
+                data: "checkcode=" + $codeStr,
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+
+                    var $label = $("#codeCheck");
+                    if (data.state == 1) {
+                        allowCode = true;
+                    } else {
+                        allowCode = false;
+                    }
+                    reminder($label, data);
+                }
+            });
+        }
+
+
+
+        // 向服务器发出请求，用户名是否存在
+        var allowUser = false;
+        function usernameCheck($usernameStr) {
+
+            $.ajax({
+                url: "http://localhost:8080/exam/existUsername",
+                data: "username=" + $usernameStr,
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    var $label = $("#usernameCheck");
+                    if (data.state == 1) {
+                        allowUser = true;
+                    } else {
+                        allowUser = false;
+                    }
+                    reminder($label, data);
+                }
+            });
+        }
+
+
+
+
+
+
+
+
+
+        // 生成图标和提示文字
+        function reminder($label, data) {
+            var msg = ``; //验证的信息
+
+            // 验证正确和错误的图标
+            if (data.state == 1) {
+                $label.attr("style", "color: green;");
+                msg = ` <span class="glyphicon glyphicon-ok" ></span>`;
+            } else {
+                $label.attr("style", "color: red;");
+                msg = ` <span class="glyphicon glyphicon-remove"</span>`;
+            }
+            msg += `${data.message}`;
+
+            //把提示信息写到用户编辑框的右边的span
+            $label.html(msg);
+        }
+
+    </script>
+</head>
+
+
+
+
+
+<!-- 分割线分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线  -->
+<!-- 分割线分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线  -->
+<!-- 分割线分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线 分割线  -->
+
+
+
+
+
+
+<body  background="image/girl3.jpg">
+    <br><br>
+    <div class="col-md-10 col-md-offset-2">
+        <h1> 登录注册系统 <small> 用户注册 </small></h1>
+    </div>
+    <br>
+    <div class="col-md-10 col-md-offset-2">
+        <form>
+            <div class="form-inline">
+                <label for="exampleInputEmail1">用户名：</label> <br>
+                <input type="text" class="form-control " style="width: 30%;" id="username" name="username"
+                    placeholder="请输入用户名" />
+                &nbsp;&nbsp;
+                <span id="usernameCheck">
+
+                </span>
+
+            </div>
+            <br>
+
+            <div class="form-group">
+                <label for="exampleInputEmail1">真实姓名：</label>
+                <input type="text" class="form-control" style="width: 30%;" id="name" name="name" placeholder="请输入真实姓名">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputEmail1">密码：</label>
+                <input type="password" class="form-control" style="width: 30%;" id="password" name="password"
+                    placeholder="请输入密码">
+            </div>
+
+
+            <span class="form-inline">
+                <label for="exampleInputEmail1">性别：</label>
+
+            </span>
+            <span class="radio">
+
+                <label>
+                    <input type="radio" name="gender" value="男" checked>
+                    男
+                </label>
+                <label>
+                    <input type="radio" name="gender" value="女">
+                    女
+                </label>
+
+            </span>
+            <br>
+            <div class="form-inline">
+                <label for="exampleInputEmail1">验证码：</label> <br>
+                <input type="text" class="form-control" style="width: 30%;" id="code" name="code" placeholder="请输入验证码">
+                &nbsp;&nbsp;
+                <img src="http://localhost:8080/exam//validateCodeServlet"
+                    onclick="this.src='http://localhost:8080/exam//validateCodeServlet?abc=11' + Math.random()" />
+
+                <span id="codeCheck">
+
+                </span>
+            </div>
+
+            <br>
+
+        </form>
+        <button class="btn btn-primary" id="submit">
+            <span class="glyphicon glyphicon-send" aria-hidden="true"></span>
+            &nbsp; 提交
+        </button>
+    </div>
+
+</body>
+
+</html>
